@@ -5,14 +5,6 @@ import platform
 import json
 from datetime import datetime
 from main import scrape_facebook_ads
-from celery_config import (
-    REDIS_HOST,
-    REDIS_PORT,
-    REDIS_USERNAME,
-    REDIS_PASSWORD,
-    broker_url,
-    result_backend
-)
 import redis
 import logging
 
@@ -30,11 +22,14 @@ OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output')
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
-# Celery configuration with Redis Cloud settings
-app.config['CELERY_BROKER_URL'] = 'redis://default:jXXK6aQaaYmfEMSfXWwQx8hXmJOQ7tS1@redis-10575.c14.us-east-1-3.ec2.redns.redis-cloud.com:10575'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://default:jXXK6aQaaYmfEMSfXWwQx8hXmJOQ7tS1@redis-10575.c14.us-east-1-3.ec2.redns.redis-cloud.com:10575'
+# Get Redis URL from environment variable
+REDIS_URL = os.getenv('REDIS_URL', 'redis://default:jXXK6aQaaYmfEMSfXWwQx8hXmJOQ7tS1@redis-10575.c14.us-east-1-3.ec2.redns.redis-cloud.com:10575')
 
-# Initialize Celery with Windows-specific settings if needed
+# Celery configuration
+app.config['CELERY_BROKER_URL'] = REDIS_URL
+app.config['CELERY_RESULT_BACKEND'] = REDIS_URL
+
+# Initialize Celery
 celery = Celery(
     app.name,
     broker=app.config['CELERY_BROKER_URL'],
@@ -42,23 +37,12 @@ celery = Celery(
 )
 
 # Load the Celery config
-celery.conf.update(
-    broker_connection_retry_on_startup=True,
-    worker_pool_restarts=True,
-    worker_pool='solo' if platform.system() == 'Windows' else 'prefork'
-)
+celery.conf.update(app.config)
 
 # Test Redis connection on startup
 def test_redis_connection():
     try:
-        # Create Redis client with configuration matching the working C# example
-        redis_client = redis.Redis(
-            host='redis-10575.c14.us-east-1-3.ec2.redns.redis-cloud.com',
-            port=10575,
-            decode_responses=True,
-            username="default",
-            password="jXXK6aQaaYmfEMSfXWwQx8hXmJOQ7tS1",
-        )
+        redis_client = redis.from_url(REDIS_URL)
         
         # Test connection by setting and getting a value
         test_key = "foo"
