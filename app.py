@@ -55,9 +55,9 @@ def test_redis_connection():
         redis_client = redis.Redis(
             host='redis-10575.c14.us-east-1-3.ec2.redns.redis-cloud.com',
             port=10575,
-            username='default',
-            password='jXXK6aQaaYmfEMSfXWwQx8hXmJOQ7tS1',
-            decode_responses=True
+            decode_responses=True,
+            username="default",
+            password="jXXK6aQaaYmfEMSfXWwQx8hXmJOQ7tS1",
         )
         
         # Test connection by setting and getting a value
