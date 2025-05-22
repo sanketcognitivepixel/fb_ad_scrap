@@ -13,6 +13,15 @@ from celery_config import (
     broker_url,
     result_backend
 )
+import redis
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -22,8 +31,8 @@ if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 # Celery configuration with Redis Cloud settings
-app.config['CELERY_BROKER_URL'] = broker_url
-app.config['CELERY_RESULT_BACKEND'] = result_backend
+app.config['CELERY_BROKER_URL'] = f'redis://default:rJ6H8vLmMhJ9b304Nq85k3oBsEdl8Njj@redis-13971.c246.us-east-1-4.ec2.redns.redis-cloud.com:13971'
+app.config['CELERY_RESULT_BACKEND'] = f'redis://default:rJ6H8vLmMhJ9b304Nq85k3oBsEdl8Njj@redis-13971.c246.us-east-1-4.ec2.redns.redis-cloud.com:13971'
 
 # Initialize Celery with Windows-specific settings if needed
 celery = Celery(
@@ -33,15 +42,50 @@ celery = Celery(
 )
 
 # Load the Celery config
-celery.config_from_object('celery_config')
+celery.conf.update(
+    broker_connection_retry_on_startup=True,
+    worker_pool_restarts=True,
+    worker_pool='solo' if platform.system() == 'Windows' else 'prefork'
+)
 
-# Additional Windows-specific Celery settings
-if platform.system() == 'Windows':
-    celery.conf.update(
-        broker_connection_retry_on_startup=True,
-        worker_pool_restarts=True,
-        worker_pool='solo'
-    )
+# Test Redis connection on startup
+def test_redis_connection():
+    try:
+        # Create Redis client with configuration matching the working C# example
+        redis_client = redis.Redis(
+            host='redis-10575.c14.us-east-1-3.ec2.redns.redis-cloud.com',
+            port=10575,
+            username='default',
+            password='jXXK6aQaaYmfEMSfXWwQx8hXmJOQ7tS1',
+            decode_responses=True
+        )
+        
+        # Test connection by setting and getting a value
+        test_key = "foo"
+        test_value = "bar"
+        redis_client.set(test_key, test_value)
+        result = redis_client.get(test_key)
+        
+        if result == test_value:
+            logger.info("✅ Redis connection test successful!")
+            logger.info(f"Test value retrieved successfully: {result}")
+        else:
+            logger.error("❌ Redis connection test failed - Value mismatch")
+            
+        # Clean up test key
+        redis_client.delete(test_key)
+        
+    except Exception as e:
+        logger.error(f"❌ Redis connection test failed: {str(e)}")
+        logger.error("Make sure your Redis Cloud credentials and SSL settings are correct")
+        raise
+
+# Run Redis connection test when app starts
+test_redis_connection()
+
+@app.route('/')
+def index():
+    return 'Hello from Render!'
 
 @celery.task(bind=True)
 def scrape_task(self, url, output_file=None, headless=True):
