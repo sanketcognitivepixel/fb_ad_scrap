@@ -31,8 +31,8 @@ if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 # Celery configuration with Redis Cloud settings
-app.config['CELERY_BROKER_URL'] = f'redis://default:rJ6H8vLmMhJ9b304Nq85k3oBsEdl8Njj@redis-13971.c246.us-east-1-4.ec2.redns.redis-cloud.com:13971'
-app.config['CELERY_RESULT_BACKEND'] = f'redis://default:rJ6H8vLmMhJ9b304Nq85k3oBsEdl8Njj@redis-13971.c246.us-east-1-4.ec2.redns.redis-cloud.com:13971'
+app.config['CELERY_BROKER_URL'] = 'redis://default:jXXK6aQaaYmfEMSfXWwQx8hXmJOQ7tS1@redis-10575.c14.us-east-1-3.ec2.redns.redis-cloud.com:10575'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://default:jXXK6aQaaYmfEMSfXWwQx8hXmJOQ7tS1@redis-10575.c14.us-east-1-3.ec2.redns.redis-cloud.com:10575'
 
 # Initialize Celery with Windows-specific settings if needed
 celery = Celery(
