@@ -13,6 +13,7 @@ from datetime import datetime
 from urllib.parse import unquote, urlparse
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+import requests
 
 # Platform identification mapping (unchanged)
 PLATFORM_MAPPING = {
@@ -29,7 +30,13 @@ CATEGORY_MAPPING = {
     ("https://static.xx.fbcdn.net/rsrc.php/v4/yO/r/ZuVkzM77JQ-.png", "-56px -206px"): "Financial products and services",
 }
 
-
+def get_current_ip():
+    """Get the current public IP address"""
+    try:
+        response = requests.get('https://api.ipify.org?format=json')
+        return response.json()['ip']
+    except Exception as e:
+        return f"Error getting IP: {str(e)}"
 
 # Helper function to process a single ad (extracted from main loop)
 def process_single_ad(ad_element):
@@ -99,6 +106,10 @@ def scrape_facebook_ads(url, output_file=None, headless=True):
         dict: Dictionary containing the scraped ads data
     """
     start_time = time.time()
+    
+    # Get starting IP address
+    starting_ip = get_current_ip()
+    print(f"\n🌐 Starting IP Address: {starting_ip}")
     
     # Chrome options
     options = Options()
@@ -629,7 +640,9 @@ def scrape_facebook_ads(url, output_file=None, headless=True):
             "total_ads_found": total_child_ads_found,
             "total_ads_processed": len(ads_data),
             "ads_data": ads_data,
-            "scraping_time": time.time() - start_time
+            "scraping_time": time.time() - start_time,
+            "starting_ip": starting_ip,
+            "ending_ip": get_current_ip()  # Get ending IP
         }
 
         # Save to JSON file if output_file is provided
@@ -641,16 +654,25 @@ def scrape_facebook_ads(url, output_file=None, headless=True):
             except Exception as e:
                 print(f"Error saving data to JSON file: {e}")
 
+        # Get and print ending IP address
+        ending_ip = get_current_ip()
+        print(f"\n🌐 Ending IP Address: {ending_ip}")
+        
         return final_output
 
     except Exception as e:
         print(f"An error occurred during scraping: {str(e)}")
+        # Get IP even if there's an error
+        ending_ip = get_current_ip()
+        print(f"\n🌐 Ending IP Address (after error): {ending_ip}")
         return {
             "error": str(e),
             "total_ads_found": 0,
             "total_ads_processed": 0,
             "ads_data": {},
-            "scraping_time": time.time() - start_time
+            "scraping_time": time.time() - start_time,
+            "starting_ip": starting_ip,
+            "ending_ip": ending_ip
         }
 
     finally:
@@ -666,4 +688,6 @@ if __name__ == "__main__":
     )
     print(f"\nTotal ads processed: {result['total_ads_processed']}")
     print(f"Total scraping time: {result['scraping_time']:.2f} seconds")
+    print(f"Starting IP: {result['starting_ip']}")
+    print(f"Ending IP: {result['ending_ip']}")
 
