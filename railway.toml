@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "celery -A celery_worker.celery worker --loglevel=info"
+restartPolicyType = "on-failure"
+restartPolicyMaxRetries = 10 
