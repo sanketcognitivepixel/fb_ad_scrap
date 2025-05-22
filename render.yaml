@@ -1,18 +1,17 @@
 services:
   - type: web
-    name: flask-web
-    runtime: python
+    name: flask-celery-app
+    env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
-      - key: REDIS_URL
-        value: redis://default:rJ6H8vLmMhJ9b304Nq85k3oBsEdl8Njj@redis-13971.c246.us-east-1-4.ec2.redns.redis-cloud.com:13971/0
-
+      - key: PYTHON_VERSION
+        value: 3.9.0
   - type: worker
     name: celery-worker
-    runtime: python
+    env: python
     buildCommand: pip install -r requirements.txt
     startCommand: celery -A app.celery worker --loglevel=info
     envVars:
-      - key: REDIS_URL
-        value: redis://default:rJ6H8vLmMhJ9b304Nq85k3oBsEdl8Njj@redis-13971.c246.us-east-1-4.ec2.redns.redis-cloud.com:13971/0
+      - key: PYTHON_VERSION
+        value: 3.9.0
