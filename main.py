@@ -674,7 +674,7 @@ def scrape_facebook_ads(url, output_file=None, headless=True):
             "starting_ip": starting_ip,
             "ending_ip": ending_ip
         }
-
+        # ...
     finally:
         driver.quit()
 
